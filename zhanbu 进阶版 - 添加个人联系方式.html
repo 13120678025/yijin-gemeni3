@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>易经在线卜卦 | I Ching Divination</title>
+    <style>
+        :root {
+            --paper-bg: #f0f0e6;
+            --ink-color: #2c2c2c;
+            --accent-color: #8b3a3a; /* Seal Red */
+            --bronze-color: #d4af37;
+            --line-height: 24px;
+            --line-gap: 10px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Kaiti", "STKaiti", "KaiTi", serif;
+            background-color: var(--paper-bg);
+            background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' opacity='0.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+            color: var(--ink-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--ink-color);
+            padding-bottom: 15px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            letter-spacing: 5px;
+            font-weight: normal;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        /* Sections Visibility Control */
+        .section-hidden {
+            display: none !important;
+        }
+
+        /* Input Stage Styles */
+        .input-card {
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.8s ease;
+        }
+
+        /* --- Settings / API Key Area Styles --- */
+        .settings-container {
+            margin-bottom: 25px;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .settings-header {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #555;
+            font-weight: bold;
+            user-select: none;
+        }
+        
+        .settings-header:hover {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--ink-color);
+        }
+
+        .settings-content {
+            padding: 15px;
+            display: none; /* Hidden by default */
+            border-top: 1px solid #ddd;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .api-input {
+            width: 100%;
+            padding: 8px 40px 8px 10px; /* Right padding for eye icon */
+            font-family: sans-serif; 
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            color: #333;
+            background: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+
+        .eye-icon {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            opacity: 0.5;
+            font-size: 1.1rem;
+            background: none;
+            border: none;
+            padding: 0;
+            z-index: 10;
+        }
+        
+        .eye-icon:hover { opacity: 1; }
+
+        .api-hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+        
+        .api-hint a {
+            color: var(--accent-color);
+            text-decoration: none;
+            border-bottom: 1px dotted;
+        }
+
+        /* --- End Settings Styles --- */
+
+        .question-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            border: 2px solid var(--ink-color);
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .question-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .chip {
+            padding: 5px 15px;
+            border: 1px solid #888;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .chip:hover {
+            background: var(--ink-color);
+            color: #fff;
+            border-color: var(--ink-color);
+        }
+
+        /* Coin Stage */
+        .stage {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            perspective: 800px;
+        }
+
+        .coin {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #5c4033;
+            border: 4px solid #daa520;
+            transition: transform 1s ease-out;
+        }
+
+        .coin::after {
+            content: '';
+            width: 24px;
+            height: 24px;
+            background-color: var(--paper-bg);
+            border: 1px solid #b8860b;
+        }
+
+        .coin.yang::before { content: '字'; position: absolute; top: 5px; font-size: 12px; opacity: 0.5; }
+        .coin.yin::before { content: '花'; position: absolute; top: 5px; font-size: 12px; opacity: 0.5; }
+
+        .tossing .coin {
+            animation: flip 0.8s infinite linear;
+        }
+
+        @keyframes flip {
+            0% { transform: rotateX(0deg) rotateY(0deg) translateY(0); }
+            25% { transform: rotateX(180deg) rotateY(90deg) translateY(-50px); }
+            50% { transform: rotateX(360deg) rotateY(180deg) translateY(0); }
+            75% { transform: rotateX(540deg) rotateY(270deg) translateY(-30px); }
+            100% { transform: rotateX(720deg) rotateY(360deg) translateY(0); }
+        }
+
+        /* Hexagram Board */
+        .hexagram-board {
+            width: 200px;
+            height: 240px;
+            display: flex;
+            flex-direction: column-reverse;
+            justify-content: flex-start;
+            align-items: center;
+            gap: var(--line-gap);
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.3);
+        }
+
+        .yao {
+            width: 100%;
+            height: var(--line-height);
+            display: flex;
+            justify-content: space-between;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .yao.visible { opacity: 1; }
+        .yao.yang { background-color: var(--ink-color); border-radius: 2px; }
+        .yao.yin { background: transparent; }
+        .yao.yin::before, .yao.yin::after { content: ''; width: 42%; height: 100%; background-color: var(--ink-color); border-radius: 2px; }
+        
+        .yao.old-yang { background-color: #555; position: relative; }
+        .yao.old-yang::after { content: 'o'; position: absolute; right: -20px; top: 0; color: var(--accent-color); font-size: 14px; line-height: 24px;}
+        
+        .yao.old-yin::before, .yao.old-yin::after { background-color: #555; }
+        .yao.old-yin { position: relative; }
+        .yao.old-yin .marker { position: absolute; right: -20px; top: 0; color: var(--accent-color); font-size: 14px; line-height: 24px; content: 'x';}
+
+        /* Controls */
+        .controls { margin-bottom: 30px; text-align: center; }
+
+        button {
+            background-color: var(--ink-color);
+            color: var(--paper-bg);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        button:hover { background-color: #4a4a4a; transform: translateY(-2px); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
+
+        /* Result Section */
+        .result-card {
+            background: #fff;
+            width: 100%;
+            padding: 30px;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            animation: fadeIn 1s ease;
+            border: 1px solid #e0e0e0;
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 5px;
+            background: var(--accent-color);
+            border-radius: 4px 4px 0 0;
+        }
+
+        .gua-title { font-size: 2rem; text-align: center; margin-bottom: 10px; color: var(--accent-color); }
+        .gua-nature { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; font-style: italic; }
+        .gua-desc { line-height: 1.8; text-align: justify; font-size: 1.1rem; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
+
+        /* AI Result Styles */
+        .ai-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fdfbf7;
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        .ai-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap; /* Preserve newlines */
+        }
+
+        .loading-dots::after {
+            content: ' .';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        /* Contact Section Styles */
+        .contact-section {
+            margin-top: 40px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .contact-title {
+            font-size: 1.2rem;
+            color: var(--ink-color);
+            margin-bottom: 15px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .contact-card {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px;
+            border-radius: 8px;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #ddd;
+        }
+
+        .contact-qr {
+            width: 160px;
+            height: 160px;
+            object-fit: contain;
+            border-radius: 4px;
+            background: #fff;
+            padding: 5px;
+            border: 1px solid #eee;
+        }
+
+        .contact-info p {
+            margin: 5px 0;
+            font-size: 1rem;
+            color: #444;
+        }
+        
+        .contact-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 5px !important;
+        }
+        
+        .contact-phone {
+            font-family: sans-serif;
+            font-weight: 500;
+        }
+
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            40% { color: #333; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            60% { text-shadow: .25em 0 0 #333, .5em 0 0 rgba(0,0,0,0); }
+            80%, 100% { text-shadow: .25em 0 0 #333, .5em 0 0 #333; }
+        }
+
+        .progress-text { margin-top: 10px; color: #888; font-size: 0.9rem; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 500px) {
+            .coin { width: 60px; height: 60px; }
+            .hexagram-board { height: 200px; width: 160px; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>易经卜卦</h1>
+        <div class="subtitle">心诚则灵 · 问道乾坤</div>
+    </header>
+
+    <!-- PHASE 1: QUESTION & API INPUT -->
+    <div id="inputSection" class="input-card">
+        
+        <!-- 优化后的 API 设置区域：可折叠 + 密码隐藏 -->
+        <div class="settings-container">
+            <div class="settings-header" onclick="toggleSettings()">
+                <span>⚙️ 配置 DeepSeek API Key</span>
+                <span id="toggleArrow">▼</span> <!-- 默认收起时箭头向下，展开后向上，这里默认UI是收起的逻辑，图标可以配合JS变 -->
+            </div>
+            <div id="settingsContent" class="settings-content">
+                <label style="display:block; margin-bottom:5px; font-size:0.85rem; color:#666;">输入 API Key (留空则不使用 AI 解读)</label>
+                <div class="input-group">
+                    <!-- 默认 type="password" 隐藏内容 -->
+                    <input type="password" id="apiKeyInput" class="api-input" value="sk-0779a3742cd64274a9d3f01e72407b42" placeholder="sk-...">
+                    <button class="eye-icon" onclick="toggleKeyVisibility()" id="eyeIcon" title="显示/隐藏 Key">👁️</button>
+                </div>
+                <div class="api-hint">
+                    如无 Key，可前往 <a href="https://www.deepseek.com/" target="_blank">DeepSeek 官网</a> 获取。
+                </div>
+            </div>
+        </div>
+
+        <p style="margin-bottom: 15px; color: #555;">凡起卦者，须心意诚挚。请默念心中所惑，录入下方：</p>
+        <textarea id="questionInput" class="question-input" placeholder="请输入您想问的问题（例如：近期事业发展如何？这段感情是否顺利？）..."></textarea>
+        
+        <div class="presets">
+            <div class="chip" onclick="usePreset('我的近期财运如何？')">我的近期财运如何？</div>
+            <div class="chip" onclick="usePreset('这段感情会有结果吗？')">这段感情会有结果吗？</div>
+            <div class="chip" onclick="usePreset('最近工作变动吉凶？')">最近工作变动吉凶？</div>
+            <div class="chip" onclick="usePreset('此行外出是否顺利？')">此行外出是否顺利？</div>
+        </div>
+
+        <button onclick="startDivination()" style="margin-top: 10px;">诚心起卦</button>
+    </div>
+
+    <!-- PHASE 2: DIVINATION STAGE (Hidden initially) -->
+    <div id="divinationSection" class="section-hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <div class="stage" id="coinStage">
+            <div class="coin"></div>
+            <div class="coin"></div>
+            <div class="coin"></div>
+        </div>
+
+        <div class="hexagram-board" id="board">
+            <div class="yao" id="line-6"></div>
+            <div class="yao" id="line-5"></div>
+            <div class="yao" id="line-4"></div>
+            <div class="yao" id="line-3"></div>
+            <div class="yao" id="line-2"></div>
+            <div class="yao" id="line-1"></div>
+        </div>
+
+        <div class="controls">
+            <button id="actionBtn" onclick="handleToss()">掷铜钱 (0/6)</button>
+        </div>
+        <div class="progress-text" id="instruction">请点击按钮开始第一次掷币</div>
+    </div>
+
+    <!-- PHASE 3: RESULT (Hidden initially) -->
+    <div class="result-card section-hidden" id="resultCard">
+        <div class="gua-title" id="guaName">乾为天</div>
+        <div class="gua-nature" id="guaStructure">上乾下乾</div>
+        
+        <div><strong>【卦辞】</strong></div>
+        <div class="gua-desc" id="guaMeaning">
+            卦辞内容...
+        </div>
+
+        <!-- AI Interpretation Section -->
+        <div class="ai-section" id="aiSection">
+            <div class="ai-title">
+                <span>🔮 大师解卦 (AI 预测)</span>
+            </div>
+            <div id="userQuestionDisplay" style="font-size: 0.9rem; color: #666; margin-bottom: 10px; font-style: italic;"></div>
+            <div class="ai-content" id="aiResponse">
+                <span class="loading-dots">正在感应天机，请稍候</span>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="resetApp()" style="font-size: 0.9rem; padding: 8px 20px; background-color: #888;">重新起卦</button>
+        </div>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="contact-section">
+        <div class="contact-title">业务咨询</div>
+        <div class="contact-card">
+            <img src="./wc.png" alt="大白AI 微信二维码" class="contact-qr" onerror="">
+            <div class="contact-info">
+                <p class="contact-name">大白AI</p>
+                <p class="contact-phone">手机：13349636469</p>
+                <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">扫码添加微信，获取更多易学智慧</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- UI Logic for Settings ---
+    function toggleSettings() {
+        const content = document.getElementById('settingsContent');
+        const arrow = document.getElementById('toggleArrow');
+        
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+            arrow.innerText = '▼'; // Arrow pointing down (collapsed)
+            arrow.style.transform = 'rotate(0deg)';
+        } else {
+            content.style.display = 'block';
+            arrow.innerText = '▲'; // Arrow pointing up (expanded)
+        }
+    }
+
+    function toggleKeyVisibility() {
+        const input = document.getElementById('apiKeyInput');
+        const icon = document.getElementById('eyeIcon');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerText = '🙈'; // Hide icon (monkey covering eyes or slashed eye)
+        } else {
+            input.type = 'password';
+            icon.innerText = '👁️'; // Show icon
+        }
+    }
+
+    // --- Configuration ---
+    const API_URL = "https://api.deepseek.com/chat/completions";
+
+    // --- Data: 64 Hexagrams ---
+    const HEXAGRAMS = {
+        "111111": { name: "乾为天", nature: "上乾下乾", desc: "【元亨利贞】大吉大利。象征天，刚健中正。君子应当效法天道，自强不息。运势极强，但需刚柔并济，不可太过刚愎自用。" },
+        "000000": { name: "坤为地", nature: "上坤下坤", desc: "【元亨，利牝马之贞】象征地，顺承包容。君子应当效法大地，厚德载物。利于跟随、辅助，不宜主动领头，以静制动为宜。" },
+        "100010": { name: "水雷屯", nature: "上坎下震", desc: "【元亨利贞】万物始生，充满艰难险阻。宜积蓄力量，不宜轻举妄动。如幼苗破土，需经历风雨方能成长。" },
+        "010001": { name: "山水蒙", nature: "上艮下坎", desc: "【亨】启蒙之象。迷茫初开，需要良师指引。切忌急功近利，应脚踏实地，通过学习和请教来克服无知。" },
+        "111010": { name: "水天需", nature: "上坎下乾", desc: "【有孚，光亨】等待时机。云在天上，雨未下。前途光明但有险阻，需耐心等待饮食宴乐之时，不可急躁冒险。" },
+        "010111": { name: "天水讼", nature: "上乾下坎", desc: "【有孚，窒惕】争执、诉讼。虽有理但有阻碍，应警惕中途停止。利于见大人化解，不利于涉险。凡事退一步海阔天空。" },
+        "010000": { name: "地水师", nature: "上坤下坎", desc: "【贞，丈人吉】兴师动众。兵者凶器，需由德高望重者统领方吉。运势如行军打仗，需严守纪律，稳扎稳打。" },
+        "000010": { name: "水地比", nature: "上坎下坤", desc: "【吉】亲密比辅。水附于地。人际关系和谐，利于合作建国。在这个时期，真诚待人，可得贵人相助。" },
+        "111011": { name: "风天小畜", nature: "上巽下乾", desc: "【亨】密云不雨。蓄养力量，力量尚微，不足以成大事。宜从小事做起，积累实力，不可好高骛远。" },
+        "110111": { name: "天泽履", nature: "上乾下兑", desc: "【亨】如履薄冰。跟在老虎尾巴后面，老虎不咬人。虽有惊险，但只要小心谨慎，依礼而行，终能化险为夷。" },
+        "111000": { name: "地天泰", nature: "上坤下乾", desc: "【吉，亨】天地交泰。小往大来，吉运当头。阴阳和谐，万物通畅。这是非常吉祥的卦象，诸事顺遂。" },
+        "000111": { name: "天地否", nature: "上乾下坤", desc: "【否之匪人】闭塞不通。大往小来。天地不交，万物不生。此时宜退守静避，韬光养晦，不可强出头。" },
+        "101111": { name: "天火同人", nature: "上乾下离", desc: "【亨】与人和同。二人同心，其利断金。利于广泛交际，团结众人。光明磊落，公正无私，大有可为。" },
+        "111101": { name: "火天大有", nature: "上离下乾", desc: "【元亨】盛大富有。日丽中天，普照万物。运势极佳，名利双收。但切忌骄傲自满，应顺天应人。" },
+        "001000": { name: "地山谦", nature: "上坤下艮", desc: "【亨】谦虚受益。山在地中，内高外低。君子以前虚怀若谷，能够减少过失，增加吉庆。谦受益，满招损。" },
+        "000100": { name: "雷地豫", nature: "上震下坤", desc: "【利建侯行师】喜悦安乐。雷出地奋。适合顺应时机行动，通过音乐和娱乐来鼓舞人心。凡事顺势而为，快乐随行。" },
+        "100110": { name: "泽雷随", nature: "上兑下震", desc: "【元亨利贞】随即随从。此时应放下成见，顺应大势或贤能之人。灵活变通，不固执己见，则无往不利。" },
+        "011001": { name: "山风蛊", nature: "上艮下巽", desc: "【元亨】整治腐败。器皿生虫，需要革新。这是拨乱反正的关键时刻，虽然麻烦，但只要振作精神处理，就能转危为安。" },
+        "110000": { name: "地泽临", nature: "上坤下兑", desc: "【元亨利贞】亲临统御。君子教思无穷，容保民无疆。运势渐长，但需居安思危，防备八月之凶（盛极而衰）。" },
+        "000011": { name: "风地观", nature: "上巽下坤", desc: "【盥而不荐】观察瞻仰。风行地上，万物被感化。此时宜多看少动，观察形势，反省自身，诚心诚意方能服众。" },
+        "100101": { name: "火雷噬嗑", nature: "上离下震", desc: "【亨】咬合亨通。口中有物，必须咬断。象征利用刑法铲除奸邪。遇到阻碍必须果断采取措施，公正执法。" },
+        "101001": { name: "山火贲", nature: "上艮下离", desc: "【亨】文饰美化。夕阳西下，文饰光彩。小事吉利，大事不宜。注重外表修饰虽然重要，但不可忽略内在的质朴。" },
+        "000001": { name: "山地剥", nature: "上艮下坤", desc: "【不利有攸往】剥落侵蚀。小人得势，君子困顿。此时形势险恶，不宜行动，应隐忍待机，保存实力，防止根基被毁。" },
+        "100000": { name: "地雷复", nature: "上坤下震", desc: "【亨】一阳来复。剥极必复，冬至之象。黑暗过去，光明初生。虽然力量尚小，但生机勃勃，未来可期。" },
+        "100111": { name: "天雷无妄", nature: "上乾下震", desc: "【元亨利贞】真实无妄。顺应天道自然，不可有非分之想。如果动机不纯或行为虚伪，必有灾祸。坚守正道则吉。" },
+        "111001": { name: "山天大畜", nature: "上艮下乾", desc: "【利贞】积蓄巨大。既有物资的积蓄，也有德行的修养。此时可以施展抱负，利于涉大川，成就大事。" },
+        "100001": { name: "山雷颐", nature: "上艮下震", desc: "【贞吉】颐养之道。祸从口出，病从口入。要注意言语谨慎和饮食节制。修身养性，保养元气。" },
+        "011110": { name: "泽风大过", nature: "上兑下巽", desc: "【亨】栋梁弯曲。压力过大，非常时期。阳气过盛，本末倒置。需要有独立的精神和非凡的勇气去解决重大问题。" },
+        "010010": { name: "坎为水", nature: "上坎下坎", desc: "【有孚】重重险阻。水流而不盈，行险而不失其信。困难接踵而至，需保持信心，像水一样流淌，终能穿越险滩。" },
+        "101101": { name: "离为火", nature: "上离下离", desc: "【利贞】附丽光明。火势炎上，光辉照耀。必须依附正道，柔顺中正。利于在文书、文化方面发展。" },
+        "001110": { name: "泽山咸", nature: "上兑下艮", desc: "【亨】感应沟通。山泽通气，少男少女相互感应。这是感情、婚姻最吉利的一卦，也象征人际间的真诚交流。" },
+        "011100": { name: "雷风恒", nature: "上震下巽", desc: "【亨】恒久长远。雷风相与，长久之道。无论做什么，都要持之以恒，不轻易改变初衷，方能有始有终。" },
+        "001111": { name: "天山遁", nature: "上乾下艮", desc: "【亨】退避隐居。小人渐长，君子且退。此时不是对抗的时候，应该明哲保身，远离是非，等待时机。" },
+        "111100": { name: "雷天大壮", nature: "上震下乾", desc: "【利贞】壮大强盛。阳气大盛，雷在天上。声势浩大，但切忌鲁莽。真正的强大是守正道，而非恃强凌弱。" },
+        "000101": { name: "火地晋", nature: "上离下坤", desc: "【康侯用锡马蕃庶】晋升前进。旭日东升，光明普照。运势蒸蒸日上，利于求职、升迁，得到上级的赏识。" },
+        "101000": { name: "地火明夷", nature: "上坤下离", desc: "【利艰贞】光明受损。日入地中，黑暗时刻。贤人受难，应当韬光养晦，隐藏智慧，在艰难中坚守正道。" },
+        "101011": { name: "风火家人", nature: "上巽下离", desc: "【利女贞】家庭伦理。风自火出。强调家庭内部的和谐与秩序。家和万事兴，先把内部事务处理好，对外才能顺利。" },
+        "110101": { name: "火泽睽", nature: "上离下兑", desc: "【小事吉】乖离背离。水火不容，意见相左。此时求同存异非常重要，不要强求大同，只能在小事上获得吉利。" },
+        "001010": { name: "水山蹇", nature: "上坎下艮", desc: "【利西南】艰难险阻。前有水后有山，进退两难。此时不宜冒进，应修身养德，寻求贤人帮助，等待时机。" },
+        "010100": { name: "雷水解", nature: "上震下坎", desc: "【利西南】危难化解。雷雨大作，洗刷天地。困难消除，宜早做决断。若无事则休养生息，有事则速战速决。" },
+        "110001": { name: "山泽损", nature: "上艮下兑", desc: "【有孚】损下益上。为了长远利益，必须做出暂时的牺牲。减少欲望，诚心诚意。损失是为了将来的收益。" },
+        "100011": { name: "风雷益", nature: "上巽下震", desc: "【利有攸往】损上益下。风雷激荡，助长万物。运势大好，利于施惠于人，建功立业。多做公益，必有回报。" },
+        "111110": { name: "泽天夬", nature: "上兑下乾", desc: "【扬于王庭】决断决裂。五阳决一阴。必须公开果断地清除小人或坏习惯。但要防备反扑，需智勇双全。" },
+        "011111": { name: "天风姤", nature: "上乾下巽", desc: "【女壮，勿用取女】相遇邂逅。一阴生于五阳之下。即将来临的诱惑或小人。不期而遇，虽有缘分，但需小心不正当的关系。" },
+        "000110": { name: "泽地萃", nature: "上兑下坤", desc: "【亨】聚集荟萃。泽在地上，水聚成潭。人才物资聚集，利于祭祀和建设。但也可能出现鱼龙混杂，需善于管理。" },
+        "011000": { name: "地风升", nature: "上坤下巽", desc: "【元亨】积小成大。树木生于地，向上生长。运势稳步上升，利于寻求大人物的指引。要有耐心，按部就班。" },
+        "010110": { name: "泽水困", nature: "上兑下坎", desc: "【亨，贞，大人吉】困顿受阻。泽无水，干涸之象。才智无法施展，备受误解。君子此时应守节不移，视困难为磨练。" },
+        "011010": { name: "水风井", nature: "上坎下巽", desc: "【改邑不改井】修德养民。木入水出，汲水之象。象征无穷的资源和智慧。虽然环境改变，但核心价值不变。利于培养人才。" },
+        "101110": { name: "泽火革", nature: "上兑下离", desc: "【己日乃孚】变革创新。水火相息，必须改变。旧的事物已经腐朽，必须进行彻底的改革。时机成熟时，改革会得到信任。" },
+        "011101": { name: "火风鼎", nature: "上离下巽", desc: "【元吉】稳重图新。木助火兴，烹饪祭祀。象征取新，接纳贤才。建立新的秩序和基业，是大吉大利之象。" },
+        "100100": { name: "震为雷", nature: "上震下震", desc: "【亨】震惊惊惕。雷声百里，惊恐不安。虽有变动和恐慌，但只要处变不惊，谈笑自若，就能化险为夷，重整旗鼓。" },
+        "001001": { name: "艮为山", nature: "上艮下艮", desc: "【不拯其随】停止抑止。重山阻隔。动静适宜，该止则止。控制欲望，安分守己，不逾越本分，内心才能安宁。" },
+        "001011": { name: "风山渐", nature: "上巽下艮", desc: "【女归吉】循序渐进。树木生于山上。凡事不可急躁，要像嫁女一样，按六礼程序一步步来。稳扎稳打，终成正果。" },
+        "110100": { name: "雷泽归妹", nature: "上震下兑", desc: "【征凶】冲动联姻。男动女悦，由于情感冲动而结合，往往不合礼法。预示着结局不佳，需要理智控制情感。" },
+        "101100": { name: "雷火丰", nature: "上震下离", desc: "【亨】丰大盛大。雷电交加，威名远播。成就巨大，如日中天。但日中则昃，盛极必衰，应保持清醒，未雨绸缪。" },
+        "001101": { name: "火山旅", nature: "上离下艮", desc: "【小亨】羁旅漂泊。山上有火，火势不定。象征旅行或客居他乡。动荡不安，宜守柔顺之道，不宜过于刚强。" },
+        "011011": { name: "巽为风", nature: "上巽下巽", desc: "【小亨】顺从谦逊。风吹万物，无孔不入。利于反复申明命令。顺应形势，柔顺而行，可获小利。" },
+        "110110": { name: "兑为泽", nature: "上兑下兑", desc: "【亨】喜悦沟通。两泽相连，互相滋润。利于通过言语沟通消除隔阂。坚持正道，以诚待人，大家都会喜悦。" },
+        "010011": { name: "风水涣", nature: "上巽下坎", desc: "【亨】离散化解。风吹水面，波纹涣散。利于化解危险，凝聚人心。适合外出远行，或者借助信仰的力量来整合局面。" },
+        "110010": { name: "水泽节", nature: "上坎下兑", desc: "【亨】节制节约。泽上有水，需有堤防。凡事要有节度，不可放纵。制定规则，适可而止，才是长久之道。" },
+        "110011": { name: "风泽中孚", nature: "上巽下兑", desc: "【豚鱼吉】诚信感通。泽上有风。心中诚信，连猪鱼这样的动物都能感动。诚信是立身之本，大吉大利。" },
+        "001100": { name: "雷山小过", nature: "上震下艮", desc: "【亨】小有过越。飞鸟遗音。此时不宜做大事，只宜做小事。宜下不宜上。行动稍微过分一点（如过分恭敬、节俭）无妨。" },
+        "101010": { name: "水火既济", nature: "上坎下离", desc: "【亨小】大功告成。水火相交，各得其所。事情已经成功，达到了完美的平衡。但要防备初吉终乱，需防患于未然。" },
+        "010101": { name: "火水未济", nature: "上离下坎", desc: "【亨】未完成。火在水上，未能相济。事情尚未成功，但充满希望。这代表新的循环开始，需要继续努力。" }
+    };
+
+    // --- Global State ---
+    let userQuestion = "";
+    let tossCount = 0;
+    const maxTosses = 6;
+    let hexagramLines = []; 
+    let isTossing = false;
+
+    // --- Elements ---
+    const inputSection = document.getElementById('inputSection');
+    const divinationSection = document.getElementById('divinationSection');
+    const resultCard = document.getElementById('resultCard');
+    const questionInput = document.getElementById('questionInput');
+    const actionBtn = document.getElementById('actionBtn');
+    const instruction = document.getElementById('instruction');
+    const coins = document.querySelectorAll('.coin');
+    const userQuestionDisplay = document.getElementById('userQuestionDisplay');
+    const aiResponse = document.getElementById('aiResponse');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const aiSection = document.getElementById('aiSection');
+
+    // --- Step 1: Input Handling ---
+    function usePreset(text) {
+        questionInput.value = text;
+    }
+
+    function startDivination() {
+        const val = questionInput.value.trim();
+        if (!val) {
+            alert("请先输入您心中的疑惑，或选择预设问题。");
+            return;
+        }
+        userQuestion = val;
+        
+        // Switch UI
+        inputSection.classList.add('section-hidden');
+        divinationSection.classList.remove('section-hidden');
+    }
+
+    // --- Step 2: Coin Tossing Logic ---
+    function handleToss() {
+        if (isTossing || tossCount >= maxTosses) return;
+
+        isTossing = true;
+        actionBtn.disabled = true;
+        instruction.innerText = "掷币中... 凝神静气";
+        document.body.classList.add('tossing');
+
+        setTimeout(() => performToss(), 1000);
+    }
+
+    function performToss() {
+        document.body.classList.remove('tossing');
+        
+        // 3 coins: 2=Yin(Tail), 3=Yang(Head)
+        const results = [
+            Math.random() > 0.5 ? 3 : 2,
+            Math.random() > 0.5 ? 3 : 2,
+            Math.random() > 0.5 ? 3 : 2
+        ];
+
+        const sum = results.reduce((a, b) => a + b, 0);
+        
+        // Visual update
+        coins.forEach((coin, index) => {
+            coin.className = 'coin'; 
+            if (results[index] === 3) {
+                coin.classList.add('yang');
+                coin.style.backgroundColor = '#ffd700';
+            } else {
+                coin.classList.add('yin');
+                coin.style.backgroundColor = '#c0c0c0';
+            }
+        });
+
+        // Determine line
+        let lineValue, lineTypeClass;
+        if (sum === 6) {
+            lineValue = 0; lineTypeClass = 'old-yin';
+            instruction.innerText = `第 ${tossCount + 1} 爻: 老阴 (变爻)`;
+        } else if (sum === 7) {
+            lineValue = 1; lineTypeClass = 'yang';
+            instruction.innerText = `第 ${tossCount + 1} 爻: 少阳`;
+        } else if (sum === 8) {
+            lineValue = 0; lineTypeClass = 'yin';
+            instruction.innerText = `第 ${tossCount + 1} 爻: 少阴`;
+        } else if (sum === 9) {
+            lineValue = 1; lineTypeClass = 'old-yang';
+            instruction.innerText = `第 ${tossCount + 1} 爻: 老阳 (变爻)`;
+        }
+
+        hexagramLines.push(lineValue);
+        drawLine(lineTypeClass, tossCount);
+
+        tossCount++;
+        actionBtn.innerText = `起卦 (${tossCount}/6)`;
+        isTossing = false;
+
+        if (tossCount < maxTosses) {
+            actionBtn.disabled = false;
+        } else {
+            finishDivination();
+        }
+    }
+
+    function drawLine(type, index) {
+        const lineEl = document.getElementById(`line-${index + 1}`);
+        lineEl.className = 'yao visible';
+        if (type === 'yang' || type === 'old-yang') lineEl.classList.add('yang');
+        else lineEl.classList.add('yin');
+        if (type === 'old-yang') lineEl.classList.add('old-yang');
+        if (type === 'old-yin') lineEl.classList.add('old-yin');
+    }
+
+    function finishDivination() {
+        actionBtn.style.display = 'none';
+        instruction.innerText = "卦象已成，正在感应天机...";
+        setTimeout(() => showResult(), 1000);
+    }
+
+    // --- Step 3: Show Results & Call AI ---
+    function showResult() {
+        const key = hexagramLines.join('');
+        const data = HEXAGRAMS[key];
+        const apiKey = apiKeyInput.value.trim();
+
+        divinationSection.classList.add('section-hidden');
+        resultCard.classList.remove('section-hidden');
+
+        if (data) {
+            document.getElementById('guaName').innerText = data.name;
+            document.getElementById('guaStructure').innerText = data.nature;
+            document.getElementById('guaMeaning').innerText = data.desc;
+            userQuestionDisplay.innerText = `问：${userQuestion}`;
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (apiKey) {
+                aiSection.style.display = 'block';
+                fetchDeepSeekInterpretation(data, apiKey);
+            } else {
+                aiSection.style.display = 'none';
+            }
+        } else {
+            instruction.innerText = "卦象生成错误，请重试。";
+        }
+    }
+
+    // --- DeepSeek API Integration ---
+    async function fetchDeepSeekInterpretation(guaData, apiKey) {
+        aiResponse.innerHTML = '<span class="loading-dots">正在感应天机，请稍候</span>';
+
+        const prompt = `
+        你是一位精通周易、擅长推演天机的占卜大师。
+        
+        用户刚才诚心起了一卦，请你根据以下信息，为用户解读吉凶，并给出具体的生活建议。
+        请注意：一定要结合用户的具体问题进行解答，不要只解释卦辞，要让用户感到“量身定做”。
+        语言风格：古朴典雅，带有禅意，但道理要通俗易懂。
+
+        【用户问题】：${userQuestion}
+        【起卦结果】：${guaData.name} (${guaData.nature})
+        【卦辞原文】：${guaData.desc}
+
+        请开始你的解读：
+        `;
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "deepseek-chat",
+                    messages: [
+                        { role: "system", content: "你是一位得道高僧和易学大师。" },
+                        { role: "user", content: prompt }
+                    ],
+                    stream: false
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`API Error: ${response.status} - ${errText}`);
+            }
+
+            const result = await response.json();
+            const aiText = result.choices[0].message.content;
+            
+            // Update UI with AI text
+            typeWriterEffect(aiText, aiResponse);
+
+        } catch (error) {
+            console.error(error);
+            aiResponse.innerText = "大师正在闭关中（调用出错，请检查API Key是否正确）。\n\n错误信息: " + error.message;
+        }
+    }
+
+    // Simple Typewriter Effect
+    function typeWriterEffect(text, element) {
+        element.innerHTML = "";
+        let i = 0;
+        const speed = 30; // ms
+        function type() {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            }
+        }
+        type();
+    }
+
+    // --- Reset ---
+    function resetApp() {
+        tossCount = 0;
+        hexagramLines = [];
+        isTossing = false;
+        userQuestion = "";
+        questionInput.value = "";
+
+        // Reset UI Classes
+        inputSection.classList.remove('section-hidden');
+        divinationSection.classList.add('section-hidden');
+        resultCard.classList.add('section-hidden');
+
+        // Reset Buttons & Board
+        actionBtn.disabled = false;
+        actionBtn.style.display = 'inline-block';
+        actionBtn.innerText = "掷铜钱 (0/6)";
+        instruction.innerText = "请点击按钮开始第一次掷币";
+
+        for(let i=1; i<=6; i++) {
+            const el = document.getElementById(`line-${i}`);
+            el.className = 'yao'; 
+        }
+        
+        aiResponse.innerHTML = '<span class="loading-dots">正在感应天机，请稍候</span>';
+    }
+
+</script>
+
+</body>
+</html>
